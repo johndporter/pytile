@@ -31,9 +31,6 @@ gravity = wnck.WINDOW_GRAVITY_STATIC
 def test_key(*args):
     print 'HELLO', args
     
-if not hotkeys.bind("<Mod4>R", test_key):
-    print "FAIL: key taken"
-
 def shrun(cmd_str):
     proc = sp.Popen([cmd_str], shell=True,
                     stdin=None, stdout=None, stderr=None, close_fds=True)
@@ -230,19 +227,31 @@ class WindowManager (object):
     def isterm(self, w):
         return w.proc.name in ['urxvt','mrxvt','rxvt','xterm']
     
+    def isemacs(self, w):
+        return w.proc.name in ['emacs']
 
     def get_space(self):
         w = self.screen.get_width()
         h = self.screen.get_height()
         wlist = self.get_visible_windows()
-        bp = [ww for ww in wlist if 'Bottom Expanded' in ww.get_name()][0]
-        tp = [ww for ww in wlist if 'Top Expanded' in ww.get_name()][0]
-        bx,by,bw,bh = bp.get_geometry()
-        tx,ty,tw,th = tp.get_geometry()
-        #print 'w',w,'h',h,'bh',bh,'th',th
-        h = h - (th+bh)
-        x = 0
-        y = th
+        named = dict([(ww.get_name(),ww) for ww in wlist])
+        try:
+            # this worked for old gnome...
+            # TODO - use named
+            bp = [ww for ww in wlist if 'Bottom Expanded' in ww.get_name()][0]
+            tp = [ww for ww in wlist if 'Top Expanded' in ww.get_name()][0]
+            bx,by,bw,bh = bp.get_geometry()
+            tx,ty,tw,th = tp.get_geometry()
+            h = h - (th+bh)
+            x = 0
+            y = th
+        except IndexError:
+            # this works on mint - maybe works everywhere ?
+            dt = named.get('Desktop')
+            if dt:
+                x,y,w,h = dt.get_geometry()
+            else:
+                raise ValueError, "Can't get geometry..."
         return x,y,w,h
         
     
@@ -310,6 +319,7 @@ class WindowManager (object):
     def grid_terminals(self):
         self.set_org('g')
         wlist = self.get_visible_terms()
+        if not len(wlist): return
         x,y,w,h = self.get_space()
         cols = min(3,max(1,len(wlist)))
         rows = (len(wlist)+(cols-1))/cols
@@ -326,6 +336,7 @@ class WindowManager (object):
     def pack_terminals(self):
         self.set_org('p')
         wlist = self.get_visible_terms()
+        if not len(wlist): return
         print 'wins',len(wlist)
         x,y,w,h = self.get_space()
         minw = 200
@@ -384,6 +395,7 @@ class WindowManager (object):
     def arrange_terminals(self):
         self.set_org('a')
         wlist = self.get_visible_terms()
+        if not len(wlist): return
         x,y,w,h = self.get_space()
         cols = max(3,min(3,len(wlist)))
         colw = w/cols
@@ -447,7 +459,17 @@ class WindowManager (object):
             if not hotkeys.bind("<Mod4>%s" % k, self.test_key):
                 print "FAIL: key taken"
 
-wm = WindowManager()
-gtk.main()
-print 'Finished'
+
+    
+def main():
+    if not hotkeys.bind("<Mod4>R", test_key):
+        print "FAIL: key taken"
+    wm = WindowManager()
+    gtk.main()
+    print 'Finished'
+    
+if __name__ == "__main__":
+    main()
+    
+
 
