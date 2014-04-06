@@ -228,7 +228,7 @@ class WindowManager (object):
     
     def isemacs(self, w):
         ignore = ["Ediff"]
-        return w.proc.name in ['emacs'] and (w.get_name() not in ignore)
+        return w.proc.name in ['emacs'] and ("Ediff" not in w.get_name())
 
     def get_space(self):
         w = self.screen.get_width()
@@ -417,8 +417,10 @@ class WindowManager (object):
         row = 0
         rowh = h/rows0
         if i >= len(wlist): return
+        dh = 8
         for r in range(rows0):
-            wlist[i].set_geometry(gravity, mask, x+col*colw,y+row*rowh,colw,rowh)
+            print 'height',rowh
+            wlist[i].set_geometry(gravity, mask, x+col*colw,y+row*rowh,colw,rowh-dh)
         #
         
         i+=1
@@ -432,7 +434,8 @@ class WindowManager (object):
         row = 0
         rowh = h/rows1
         for r in range(rows1):
-            wlist[i].set_geometry(gravity, mask, x+col*colw,y+row*rowh,colw,rowh)
+            print 'height',rowh
+            wlist[i].set_geometry(gravity, mask, x+col*colw,y+row*rowh,colw,rowh-dh)
             i+=1
             if i >= len(wlist): return
             row += 1
@@ -443,7 +446,7 @@ class WindowManager (object):
         row = 0
         rowh = h/rows2
         for r in range(rows2):
-            wlist[i].set_geometry(gravity, mask, x+col*colw,y+row*rowh,colw,rowh)
+            wlist[i].set_geometry(gravity, mask, x+col*colw,y+row*rowh,colw,rowh-dh)
             i+=1
             if i >= len(wlist): return
             row += 1
