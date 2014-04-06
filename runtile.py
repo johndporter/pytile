@@ -1,13 +1,12 @@
 #!/usr/bin/python
-# tst.py
 #
 # Copyright (C) 2013 
 # Author: John Porter <jdp@user-desktop>
 # Created: 24 Nov 2013
 #
 """
-tst.py
-['__class__', '__cmp__', '__copy__', '__deepcopy__', '__delattr__', '__dict__', '__doc__', '__format__', '__gdoc__', '__getattribute__', '__gobject_init__', '__grefcount__', '__gtype__', '__hash__', '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'activate', 'activate_transient', 'chain', 'close', 'connect', 'connect_after', 'connect_object', 'connect_object_after', 'disconnect', 'disconnect_by_func', 'emit', 'emit_stop_by_name', 'freeze_notify', 'get_actions', 'get_application', 'get_class_group', 'get_client_window_geometry', 'get_data', 'get_geometry', 'get_group_leader', 'get_icon', 'get_icon_is_fallback', 'get_icon_name', 'get_mini_icon', 'get_name', 'get_pid', 'get_properties', 'get_property', 'get_screen', 'get_session_id', 'get_session_id_utf8', 'get_sort_order', 'get_state', 'get_transient', 'get_window_type', 'get_workspace', 'get_xid', 'handler_block', 'handler_block_by_func', 'handler_disconnect', 'handler_is_connected', 'handler_unblock', 'handler_unblock_by_func', 'has_icon_name', 'has_name', 'is_above', 'is_active', 'is_below', 'is_fullscreen', 'is_in_viewport', 'is_maximized', 'is_maximized_horizontally', 'is_maximized_vertically', 'is_minimized', 'is_most_recently_activated', 'is_on_workspace', 'is_pinned', 'is_shaded', 'is_skip_pager', 'is_skip_tasklist', 'is_sticky', 'is_visible_on_workspace', 'keyboard_move', 'keyboard_size', 'make_above', 'make_below', 'maximize', 'maximize_horizontally', 'maximize_vertically', 'minimize', 'move_to_workspace', 'needs_attention', 'notify', 'or_transient_needs_attention', 'pin', 'props', 'set_data', 'set_fullscreen', 'set_geometry', 'set_icon_geometry', 'set_properties', 'set_property', 'set_skip_pager', 'set_skip_tasklist', 'set_sort_order', 'set_window_type', 'shade', 'stick', 'stop_emission', 'thaw_notify', 'transient_is_most_recently_activated', 'unmake_above', 'unmake_below', 'unmaximize', 'unmaximize_horizontally', 'unmaximize_vertically', 'unminimize', 'unpin', 'unshade', 'unstick', 'weak_ref']
+Tile windows
+
 """
 import time
 import os
@@ -228,7 +227,8 @@ class WindowManager (object):
         return w.proc.name in ['urxvt','mrxvt','rxvt','xterm']
     
     def isemacs(self, w):
-        return w.proc.name in ['emacs']
+        ignore = ["Ediff"]
+        return w.proc.name in ['emacs'] and (w.get_name() not in ignore)
 
     def get_space(self):
         w = self.screen.get_width()
@@ -317,14 +317,16 @@ class WindowManager (object):
             pass
 
     def get_target_cols(self, w):
-        return int(w/522)
+        cols = int(w/522)
+        print 'target', cols, w
+        return cols
     
     def grid_terminals(self):
         self.set_org('g')
         wlist = self.get_visible_terms()
         if not len(wlist): return
         x,y,w,h = self.get_space()
-        target_cols = self.get_target_cols()
+        target_cols = self.get_target_cols(w)
         cols = min(target_cols,max(1,len(wlist)))
         rows = (len(wlist)+(cols-1))/cols
         i = 0
@@ -435,7 +437,7 @@ class WindowManager (object):
             if i >= len(wlist): return
             row += 1
         #
-        if target_cols <= 3: return
+        if target_cols < 3: return
         col = 2
         rows2 = max(1,min(12,len(wlist)-rows1-rows0))
         row = 0
