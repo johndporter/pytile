@@ -315,13 +315,17 @@ class WindowManager (object):
             self.pack_terminals()
         else:
             pass
-            
+
+    def get_target_cols(self, w):
+        return int(w/522)
+    
     def grid_terminals(self):
         self.set_org('g')
         wlist = self.get_visible_terms()
         if not len(wlist): return
         x,y,w,h = self.get_space()
-        cols = min(3,max(1,len(wlist)))
+        target_cols = self.get_target_cols()
+        cols = min(target_cols,max(1,len(wlist)))
         rows = (len(wlist)+(cols-1))/cols
         i = 0
         colw = w/cols
@@ -334,6 +338,10 @@ class WindowManager (object):
                 i += 1
         
     def pack_terminals(self):
+        """Arrange so with one terminal big.
+        
+        Smash all the others into a small space.
+        """
         self.set_org('p')
         wlist = self.get_visible_terms()
         if not len(wlist): return
@@ -393,11 +401,13 @@ class WindowManager (object):
 
         
     def arrange_terminals(self):
+        """Arrange into one big and maybe another bit and then smaller.."""
         self.set_org('a')
         wlist = self.get_visible_terms()
         if not len(wlist): return
         x,y,w,h = self.get_space()
-        cols = max(3,min(3,len(wlist)))
+        target_cols = self.get_target_cols(w)
+        cols = max(target_cols,min(target_cols,len(wlist)))
         colw = w/cols
         i = 0
         col = 0
@@ -412,7 +422,11 @@ class WindowManager (object):
         i+=1
         if i >= len(wlist): return
         col = 1
-        rows1 = max(1,min(2,len(wlist)-2-rows0))
+        cols_left = target_cols-1
+        if cols_left == 1:
+            rows1 = max(1,min(12,len(wlist)-rows0))
+        else:
+            rows1 = max(1,min(2,len(wlist)-cols_left-rows0))
         row = 0
         rowh = h/rows1
         for r in range(rows1):
@@ -421,6 +435,7 @@ class WindowManager (object):
             if i >= len(wlist): return
             row += 1
         #
+        if target_cols <= 3: return
         col = 2
         rows2 = max(1,min(12,len(wlist)-rows1-rows0))
         row = 0
@@ -435,12 +450,12 @@ class WindowManager (object):
 
     def get_visible_terms(self):
         wlist = self.get_visible_windows()
-        wlist = [w for w in wlist if self.isterm(w)]
+        wlist = [w for w in wlist if self.isterm(w) or self.isemacs(w)]
         return wlist
     
     def goto_terminal(self, n):
-        wlist = self.get_visible_windows()
-        wlist = [w for w in wlist if self.isterm(w)]
+        wlist = self.get_visible_terms()
+
         if n < len(wlist):
             w = wlist[n]
             print 'goto', self.info(w)
